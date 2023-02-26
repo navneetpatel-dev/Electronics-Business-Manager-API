@@ -17,7 +17,7 @@ dbConnect();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
-app.use(morgan("combined"));
+app.use(morgan("dev"));
 
 app.use("/api/user", authRouter);
 app.use("/api/product", productRouter);
