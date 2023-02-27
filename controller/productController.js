@@ -61,17 +61,26 @@ const getAllProducts = async (req, res, next) => {
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
 
-    let productsFetched = Product.find(JSON.parse(queryStr));
+    let productsFetchedQuery = Product.find(JSON.parse(queryStr));
 
     // Sorting
     if (req.query.sort) {
       const sortBy = req.query.sort.split(",").join(" ");
-      productsFetched = await productsFetched.sort(sortBy);
+      productsFetchedQuery = productsFetchedQuery.sort(sortBy);
     } else {
-      productsFetched = await productsFetched.sort("-createdAt");
+      productsFetchedQuery = productsFetchedQuery.sort("-createdAt");
     }
 
-    res.json(productsFetched);
+    // Limiting the fields
+    if (req.query.fields) {
+      const fields = req.query.fields.split(",").join(" ");
+      productsFetchedQuery = productsFetchedQuery.select(fields);
+    } else {
+      productsFetchedQuery = productsFetchedQuery.select("-__v");
+    }
+
+    const finalProductFetched = await productsFetchedQuery;
+    res.json(finalProductFetched);
   } catch (error) {
     console.log(error);
     next(new Error("Cannot Fetch All Products, Something Went wrong"));
