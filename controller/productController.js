@@ -79,6 +79,19 @@ const getAllProducts = async (req, res, next) => {
       productsFetchedQuery = productsFetchedQuery.select("-__v");
     }
 
+    // Pagination
+    const page = req.query.page;
+    const limit = req.query.limit;
+    const skip = (page - 1) * limit;
+    productsFetchedQuery = productsFetchedQuery.skip(skip).limit(limit);
+    if (req.query.page) {
+      const productCount = await Product.countDocuments();
+      if (skip >= productCount) {
+        res.status(404);
+        next(new Error("This page doesn't exist"));
+      }
+    }
+
     const finalProductFetched = await productsFetchedQuery;
     res.json(finalProductFetched);
   } catch (error) {
