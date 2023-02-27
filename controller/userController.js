@@ -229,6 +229,26 @@ const unblockUser = async (req, res, next) => {
   }
 };
 
+const updatePassword = async (req, res, next) => {
+  try {
+    const { _id } = req.user;
+    const { password } = req.body;
+    validateMongoDBId(_id);
+    const user = await User.findById(_id);
+    if (password) {
+      user.password = password;
+      user.createPasswordResetToken();
+      const userWithUpdatedPassword = await user.save();
+      res.status(202).json(userWithUpdatedPassword);
+    } else {
+      res.status(202).json(user);
+    }
+  } catch (error) {
+    console.log(error);
+    next(new Error("Cannot Update Password, Something Went Wrong"));
+  }
+};
+
 module.exports = {
   createUser,
   loginUser,
@@ -240,4 +260,5 @@ module.exports = {
   unblockUser,
   handleRefreshToken,
   logout,
+  updatePassword,
 };

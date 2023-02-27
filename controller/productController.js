@@ -68,7 +68,7 @@ const getAllProducts = async (req, res, next) => {
       const sortBy = req.query.sort.split(",").join(" ");
       productsFetchedQuery = productsFetchedQuery.sort(sortBy);
     } else {
-      productsFetchedQuery = productsFetchedQuery.sort("-createdAt");
+      // productsFetchedQuery = productsFetchedQuery.sort("-createdAt");
     }
 
     // Limiting the fields
