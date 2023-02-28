@@ -14,6 +14,7 @@ const createBlog = async (req, res, next) => {
 const updateBlog = async (req, res, next) => {
   try {
     const { id } = req.params;
+    validateMongoDBId(id);
     const updatedBlog = await Blog.findByIdAndUpdate(id, req.body, {
       new: true,
     });
@@ -26,6 +27,7 @@ const updateBlog = async (req, res, next) => {
 const getBlog = async (req, res, next) => {
   try {
     const { id } = req.params;
+    validateMongoDBId(id);
     const getBlog = await Blog.findByIdAndUpdate(
       id,
       { $inc: { numViews: 1 } },
@@ -50,6 +52,7 @@ const getAllBlogs = async (req, res, next) => {
 const deleteBlog = async (req, res, next) => {
   try {
     const { id } = req.params;
+    validateMongoDBId(id);
     const deletedBlog = await Blog.findByIdAndDelete(id);
     res.status(202).json(deletedBlog);
   } catch (error) {
@@ -57,4 +60,131 @@ const deleteBlog = async (req, res, next) => {
   }
 };
 
-module.exports = { createBlog, updateBlog, getBlog, getAllBlogs, deleteBlog };
+const likeBlog = async (req, res, next) => {
+  try {
+    const { blogId } = req.body;
+    validateMongoDBId(blogId);
+
+    // Find the blog which I want to be liked
+    let blog = await Blog.findById(blogId);
+    if (!blog) {
+      next(new Error("Cannot find blod with this id"));
+    }
+    // find the login user
+    const loginUserId = req?.user?._id;
+
+    // find if the user has already liked the blog
+    const isLiked = blog?.likes?.find(
+      (id) => id?.toString() === loginUserId.toString()
+    );
+
+    // find if the user have already disliked the blog
+    const isDisliked = blog?.dislikes?.find(
+      (id) => id?.toString() === loginUserId.toString()
+    );
+
+    if (isLiked) {
+      blog = await Blog.findByIdAndUpdate(
+        blogId,
+        {
+          $pull: { likes: loginUserId },
+          isLiked: false,
+        },
+        { new: true }
+      );
+    } else {
+      blog = await Blog.findByIdAndUpdate(
+        blogId,
+        {
+          $push: { likes: loginUserId },
+          isLiked: true,
+        },
+        { new: true }
+      );
+    }
+    if (isDisliked) {
+      blog = await Blog.findByIdAndUpdate(
+        blogId,
+        {
+          $pull: { dislikes: loginUserId },
+          isDisliked: false,
+        },
+        { new: true }
+      );
+    }
+    res.status(200).json(blog);
+  } catch (error) {
+    console.log(error);
+    next(new Error("Cannot Like blog, something went wrong"));
+  }
+};
+
+const dislikeBlog = async (req, res, next) => {
+  try {
+    const { blogId } = req.body;
+    validateMongoDBId(blogId);
+
+    // Find the blog which I want to be liked
+    let blog = await Blog.findById(blogId);
+    if (!blog) {
+      next(new Error("Cannot find blod with this id"));
+    }
+
+    // find the login user
+    const loginUserId = req?.user?._id;
+
+    // find if the user have already disliked the blog
+    const isDisliked = blog?.dislikes?.find(
+      (id) => id?.toString() === loginUserId.toString()
+    );
+
+    // find if the user has already liked the blog
+    const isLiked = blog?.likes?.find(
+      (id) => id?.toString() === loginUserId.toString()
+    );
+
+    if (isDisliked) {
+      blog = await Blog.findByIdAndUpdate(
+        blogId,
+        {
+          $pull: { dislikes: loginUserId },
+          isDisliked: false,
+        },
+        { new: true }
+      );
+    } else {
+      blog = await Blog.findByIdAndUpdate(
+        blogId,
+        {
+          $push: { dislikes: loginUserId },
+          isDisliked: true,
+        },
+        { new: true }
+      );
+    }
+    if (isLiked) {
+      blog = await Blog.findByIdAndUpdate(
+        blogId,
+        {
+          $pull: { likes: loginUserId },
+          isLiked: false,
+        },
+        { new: true }
+      );
+    }
+    res.status(200).json(blog);
+  } catch (error) {
+    console.log(error);
+    next(new Error("Cannot Dislike blog, something went wrong"));
+  }
+};
+
+module.exports = {
+  createBlog,
+  updateBlog,
+  getBlog,
+  getAllBlogs,
+  deleteBlog,
+  likeBlog,
+  dislikeBlog,
+};
