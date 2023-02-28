@@ -37,4 +37,24 @@ const getBlog = async (req, res, next) => {
   }
 };
 
-module.exports = { createBlog, updateBlog, getBlog };
+const getAllBlogs = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const getBlogs = await Blog.find();
+    res.status(200).json(getBlogs);
+  } catch (error) {
+    next(new Error("Cannot get all blogs, something went wrong"));
+  }
+};
+
+const deleteBlog = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const deletedBlog = await Blog.findByIdAndDelete(id);
+    res.status(202).json(deletedBlog);
+  } catch (error) {
+    next(new Error("Cannot Delete blog, something went wrong"));
+  }
+};
+
+module.exports = { createBlog, updateBlog, getBlog, getAllBlogs, deleteBlog };
